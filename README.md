@@ -73,8 +73,13 @@ pip install pandas
 ```bash
 python your_script_name.py
 ```
+## 🔀 Workflow
 
----
+* Implemented the design check in a separate branch
+* Created a Pull Request to merge into `main`
+* Changes were reviewed before merging
+<img width="1902" height="546" alt="Screenshot 2026-04-02 182454" src="https://github.com/user-attachments/assets/fba02b0a-1f34-45e8-8a72-42d476eb3f02" />
+
 
 ## 📤 Output
 
