@@ -1,10 +1,10 @@
-#Design beam by python code
-##input
+# Design beam by python code
+## input
 get the data from excel file 
-##how to run code
+## how to run code
 install requirements -r 
 python and pandas
-##output 
+## output 
 get the moment and deflection
 
 
