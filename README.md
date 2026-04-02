@@ -96,7 +96,9 @@ Maximum Bending Moment = 120.50 kN·m (Beam B3)
 Maximum Deflection = 8.25 mm (Beam B2)
 ```
 
----
+## output of the code
+<img width="1092" height="608" alt="image" src="https://github.com/user-attachments/assets/0dd17012-5685-4b61-b88b-99f3993696e7" />
+
 
 ## ⚠️ Assumptions
 
