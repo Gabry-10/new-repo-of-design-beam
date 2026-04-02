@@ -1,46 +1,69 @@
 import pandas as pd
 
-# Read the Excel or CSV file
-df = pd.read_csv("231000476.csv")   # change to .xlsx if needed
+# Read file
+df = pd.read_csv("231000476.csv")
 
-# Convert units to be consistent
-# w: kN/m → N/m
+# ===== USER INPUTS (EDIT THESE) =====
+df["h_mm"] = 500              # section depth (mm) ← CHANGE if needed
+sigma_allow = 250            # MPa (steel example)
+# ===================================
+
+# ===== Unit Conversions =====
 df["w_N_per_m"] = df["UDL_kN_per_m"] * 1000
-
-# E: MPa → N/m²
 df["E_N_per_m2"] = df["E_MPa"] * 1e6
-
-# I: mm^4 → m^4
 df["I_m4"] = df["I_mm4"] * 1e-12
-
-# L already in meters
 df["L"] = df["Span_m"]
 
-# ===== Calculations =====
+# ===== Structural Calculations =====
 
-# Maximum Bending Moment (kN·m)
+# Max Moment (kN·m)
 df["M_max_kNm"] = (df["UDL_kN_per_m"] * df["L"]**2) / 8
 
-# Maximum Deflection (m)
-df["deflection_m"] = (5 * df["w_N_per_m"] * df["L"]**4) / (384 * df["E_N_per_m2"] * df["I_m4"])
+# Convert to N·mm for stress
+df["M_Nmm"] = df["M_max_kNm"] * 1e6
 
-# Convert deflection to mm (better for engineering)
+# Section properties
+df["h_m"] = df["h_mm"] / 1000
+df["c_m"] = df["h_m"] / 2
+
+# Convert I to mm^4 for stress calc
+df["I_mm4"] = df["I_mm4"]
+
+# ===== Bending Stress =====
+# σ = M*c / I
+df["stress_MPa"] = (df["M_Nmm"] * (df["h_mm"]/2)) / df["I_mm4"]
+
+# ===== Deflection =====
+df["deflection_m"] = (5 * df["w_N_per_m"] * df["L"]**4) / (384 * df["E_N_per_m2"] * df["I_m4"])
 df["deflection_mm"] = df["deflection_m"] * 1000
 
-# ===== Results =====
+# ===== Allowable Deflection =====
+df["allowable_deflection_mm"] = (df["L"] * 1000) / 250
 
-print("\n===== Results for Each Beam =====")
-print(df[["Beam_ID", "M_max_kNm", "deflection_mm"]])
+# ===== CHECKS =====
+df["Stress_OK"] = df["stress_MPa"] <= sigma_allow
+df["Deflection_OK"] = df["deflection_mm"] <= df["allowable_deflection_mm"]
 
-# Find maximum values overall
-max_moment = df["M_max_kNm"].max()
-max_moment_beam = df.loc[df["M_max_kNm"].idxmax(), "Beam_ID"]
+df["SAFE"] = df["Stress_OK"] & df["Deflection_OK"]
 
-max_deflection = df["deflection_mm"].max()
-max_deflection_beam = df.loc[df["deflection_mm"].idxmax(), "Beam_ID"]
+# ===== OUTPUT =====
+print("\n===== DESIGN CHECK RESULTS =====")
+print(df[[
+    "Beam_ID",
+    "M_max_kNm",
+    "stress_MPa",
+    "deflection_mm",
+    "allowable_deflection_mm",
+    "Stress_OK",
+    "Deflection_OK",
+    "SAFE"
+]])
 
-print("\n===== MAX VALUES =====")
-print(f"Maximum Bending Moment = {max_moment:.2f} kN·m (Beam {max_moment_beam})")
-print(f"Maximum Deflection = {max_deflection:.2f} mm (Beam {max_deflection_beam})")
+# Summary
+unsafe_beams = df[df["SAFE"] == False]
 
-df.to_csv("result.csv",index=False)
+if len(unsafe_beams) == 0:
+    print("\n✅ All beams are SAFE")
+else:
+    print("\n❌ Unsafe beams:")
+    print(unsafe_beams["Beam_ID"])
