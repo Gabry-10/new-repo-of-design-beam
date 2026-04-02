@@ -12,3 +12,4 @@ fy= df["fy_MPa"][0]
 
 
 df.to_csv("result.csv",index=False)
+print("done") 
